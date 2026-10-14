@@ -1,0 +1,2 @@
+Hello from Arch Linux
+Changed inside the container
