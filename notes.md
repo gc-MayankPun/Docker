@@ -55,3 +55,76 @@ That's the central value of Docker: <b>build the environment once, then reuse it
 - Container: A running isolated application environment. It has a filesystem view, processes and networking configuration.
 - Image: The packaged template from which Docker creates containers. An image is not itself a running application.
 - Dockerfile: A text file containing instructions Docker uses to build an image.
+
+## 5. Containers vs virtual machines
+
+- A container isolates application processes while sharing the host operating-system kernel.
+- A virtual machine (VM) virtualizes hardware and normally runs its own guest operating system and kernel.
+- Containers are often quicker to start and use fewer resources, but they are not a replacement for every VM use case.
+- On non-Linux hosts, Docker commonly uses a lightweight Linux VM to provide the Linux kernel containers need.
+
+## 6. Images and containers are different
+An image is a reusable template. A container is a particular instance created from that image.
+
+One image can create multiple containers. Each container has its own runtime state and writable layer, while sharing the image's underlying layers.
+
+Useful commands:
+
+```docker
+docker images                 # List local images
+docker ps                     # List running containers
+docker ps -a                  # List all containers, including stopped ones
+docker run hello-world        # Download if needed, then run a test container
+```
+Container lifecycle commands:
+
+```docker
+docker stop CONTAINER_NAME    # Stop a running container
+docker start CONTAINER_NAME   # Start an existing stopped container
+docker rm CONTAINER_NAME      # Remove a stopped container
+docker rmi IMAGE_NAME         # Remove an image, if no container depends on it
+```
+
+*Stopping a container does not remove it. Removing a container does not automatically remove its image.*
+
+## 7. Running an existing image: Nginx example
+
+```docker
+docker run -d --name my-nginx -p 8080:80 nginx
+```
+
+- run: create and start a container.
+- -d: run in the background (detached mode).
+- --name my-nginx: assign a readable container name.
+- -p 8080:80: map host port 8080 to container port 80.
+- nginx: the image to use. Docker downloads it if needed.
+
+Port mapping follows this pattern: -p HOST_PORT:CONTAINER_PORT.
+
+## 8. Updating an application image
+
+A running container is created from a particular image. Editing a source file on your host does not automatically update the code inside an already-created image/container in this workflow.
+
+Rebuild the image and recreate the container:
+
+```docker
+docker build -t docker-demo .
+docker stop my-docker-app
+docker rm my-docker-app
+docker run -d --name my-docker-app -p 3000:3000 docker-demo
+```
+
+Later, bind mounts will let you use host files directly for a development workflow.
+
+## 9. Useful troubleshooting commands
+
+```docker
+docker ps                     # Running containers
+docker ps -a                  # All containers
+docker images                 # Local images
+docker logs my-docker-app     # Application logs
+docker inspect my-docker-app  # Detailed container configuration
+docker exec -it my-docker-app sh  # Shell inside a running container
+```
+
+*If a command fails, read the error carefully. Check that the Docker daemon is running, the container name is correct, and the image/container exists.*
