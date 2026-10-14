@@ -4,7 +4,7 @@ const app = express();
 const PORT = 3000;
 
 app.get("/", (req, res) => {
-    res.send("Hello from my Docker Container!")
+    res.send("Docker version 2!")
 })
 
 app.get("/about", (req, res) => {
