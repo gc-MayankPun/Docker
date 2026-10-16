@@ -266,3 +266,58 @@ docker run --mount type=bind,src=/host/path,dst=/container/path IMAGE
 - **Volume:** Docker-managed storage, useful for persistent data.
 - **Bind mount:** Connects a specific host path to a container path, useful for development.
 - Both can keep data available beyond a container's lifecycle, provided the underlying storage remains intact.
+
+# Docker Networking
+
+## 1. Why does Docker networking matter?
+
+Imagine you have a web application and a database running in separate containers. The web app needs to send SQL queries to the database. Docker networking provides the connection between them.
+
+- Your browser: http://localhost:8080 -> published port: 8080 -> 80
+- Web container: Port 80 inside the container
+- *container communicate over a Docker network*
+- Database container: Accessible to connected containers
+
+There are two concepts to keep separate:
+- Port publishing lets traffic reach a container through a port on your host machine
+- Docker networks let containers communicate with each other
+
+## 2. Creating a custom network
+
+Create one and check that it exists
+```docker
+docker network create app-network
+docker network ls 
+```
+
+Now launch two containers on same network
+```docker
+docker run -dit --name frontend --network app-network alpine sh
+docker run -dit --name backend --network app-network alpine sh
+```
+
+here's what the flags mean:
+- -d: Run in the background
+- -i: Keep standard input open
+- -t: Allocate a terminal
+- --name: Give the container a recognizable name
+- --network: Connect it to the specified Docker network
+- alpine: Use a small Linux image
+- sh: Start a shell
+
+Now let's make the container talk with each other
+```docker
+docker exec frontend ping -c 3 backend
+```
+
+## 3. Docker Network commands
+
+```docker
+docker network ls                                           # List networks
+docker network inspect bridge                               # Inspect a network
+docker network create app-network                           # Create a custom network
+docker run -d --name my-app --network app-network IMAGE     # Run a container on a network
+docker network connect app-network CONTAINER                # Connect an existing network
+docker network disconnect app-network CONTAINER             # Disconnect a network
+docker network rm app-network                               # Remove a network
+```
