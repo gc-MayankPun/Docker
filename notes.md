@@ -360,3 +360,44 @@ docker run --rm --env-file .env alpine sh -c 'echo "$APP_NAME | $ENVIRONMENT | $
 ```
 
 docker reads the variables from the file and makes them available inside the container.
+
+# Docker Compose
+
+So far we've run containers using individual commands. That's fine for one container but imagine running a web app, a database and a cache together.
+
+You might need commands with different ports, environment variables, volumes and networks.
+
+Docker Compose lets you define an entire multi-container applciation in one YAML file and manage it with a few commands.
+
+## 1. Understand the idea
+
+Imagine the application you will build for your capstone
+```
+Node.js application: Port 3000 <-> Private Docker Network <-> PostgreSQL database
+```
+- Without Compose, you configure and start each container separately.
+- With Compose, you describe both services in a compose.yaml file.
+
+## 2. Why is Compose useful?
+
+The big win is repeatability. Your application configuration lives in a file you can version-control and share with teammates.
+
+Instead of remembering a long docker run command, you run:
+```docker
+docker compose up -d
+```
+
+Compose also creates a network for the project by default, allowing its services to communicate using service names. For example, a Node.js service could connect to a database service named db using hostname db.
+
+## 3. Docker compose commands
+
+```docker
+docker compose up -d    # Start from the compose.yaml file from the directory 
+docker compose ps       # Lists the project's services and their status
+docker compose logs     # Display service logs
+docker compose start    # Starts them again
+docker compose stop     # Stops the services without removing their containers
+docker compose down     # Stops and removes the projects containers and it's default network
+```
+
+*docker compose down does not automatically remove named volumes unless you explicitly request volume removal with -v*
