@@ -321,3 +321,42 @@ docker network connect app-network CONTAINER                # Connect an existin
 docker network disconnect app-network CONTAINER             # Disconnect a network
 docker network rm app-network                               # Remove a network
 ```
+
+# Environment Variables
+
+Imagine your Node.js app has this line:
+```js
+const PORT = 3000;
+```
+
+What if you want to run the same image on port 3000 during development and port 5000 in another environment?
+
+You could edit the code and rebuild the image. But Docker gives us a cleaner approach: **environment variables**
+
+## 1. What are environment variables?
+
+Environment variables are values supplied to a running process from its environment. They let you configure an application without changing its source code or rebuilding its image.
+
+## 2. Pass a variable into a container
+
+Run an alpine container with a variable named APP_NAME
+```docker
+docker run --rm -e APP_NAME="Docker Academy" alpine sh -c 'echo "Hellp from $APP_NAME"'
+```
+
+Passing multiple variables
+```docker
+docker run --rm -e APP_NAME="Docker Academy" -e PORT=3000 alpine sh -c 'echo "$APP_NAME running on PORT $PORT"'
+```
+
+now setting PORT on server.js with variables set from the command
+```docker
+docker run -d --name configurable-app -e PORT=5000 -p 3000:5000 docker-demo
+```
+
+or passing through env file...
+```docker
+docker run --rm --env-file .env alpine sh -c 'echo "$APP_NAME | $ENVIRONMENT | $PORT"'
+```
+
+docker reads the variables from the file and makes them available inside the container.
