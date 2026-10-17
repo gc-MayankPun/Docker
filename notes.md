@@ -436,3 +436,101 @@ docker build -t my-web-app:1.0 .
 docker tag my-web-app:1.0 YOUR_DOCKERHUB_USERNAME/my-web-app:1.0
 docker push YOUR_DOCKERHUB_USERNAME/my-web-app:1.0
 ```
+
+# Production-minded Docker
+
+Your container work locally. Now let's learn how to make them smaller, safer and more reliable.
+
+## 1. Why images size matters
+
+In your earlier Dockerfile we used:
+
+```Dockerfile
+FROM node:22
+```
+
+That image includes more than your app necessarily needs. You can often reduce the image size by using a smaller base image:
+
+```Dockerfile
+FROM node:22-alpine
+```
+
+Alpine-based images are smaller, although some Node.js dependencies may need additional system libraries or buidl tools. Smaller isn't automatically better if compatibility suffers.
+
+Compare image sizes with:
+```docker
+docker images
+```
+
+## 2. Run your app as a non-root user
+
+By default a Dockerfile may run processes as root inside the container. That isn't ideal for production applications.
+
+For your Node.js app, you can use the node user already provided by the official Node image:
+```Dockerfile
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY --chown=node:node package*.json ./
+USER node
+RUN npm install
+
+COPY --chown=node:node . .
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+```
+
+The USER node instruction switches subsequent build and runtime commands to the non-root user. This example is suitable for your simple app, through more complex dependencies may require adjustments.
+
+Why it matters? If your application is compromised running it as a non-root user can limit the damage it can do inside the container.
+
+## 3. Understand Docker image layers and caching
+
+Each Dockerfile instruction can create an image layer
+
+Consider this sequence:
+```Dockerfile
+COPY package*.json ./
+RUN npm install
+COPY . .
+```
+
+Why copy the package files first?
+- If your application code changes but the dependencies don't, Docker can often reuse the dependency-installation layer.
+- If package.json or package-lock.json changes, Docker needs to rebuild that layer.
+
+This is why Dockerfile instruction order matters. Good caching can save time on repeated builds.
+
+## 4. Never bake secrets into an image
+
+Avoid putting database passwords, API keys or tokens directly into your Dockerfile:
+```Dockerfile
+ENV DB_PASSWORD=supersecret
+```
+
+Why? Values embedded in image configuration can be exposed to people who can inspect or access the image.
+
+Instead, supply configuration at runtime using environment variables or Compose configuration. For production secrets, use a dedicated secrets manager or an appropriate Compose secrets mechanism supported by your deployment environment.
+
+Also, don't commit .env files containing credentials to Git. A .dockerignore file helps prevent them from entering the build context, but it doesn't replace proper secret management.
+
+## 5. use health checks thoughtfully
+
+A container can be running even if the application inside it isn't ready to save requests.
+
+For PostgreSQL, your Compose file already included a health check:
+
+```yaml
+healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U appuser -d appdb"]
+    interval: 5s
+    timeout: 3s
+    retries: 10
+```
+
+This checks whether PostgreSQL is accepting connections. Your web service uses depends_on with condition: service_healthy to wait for that check before starting.
+
+*Remember that a health check doesn't automaticallt fix a broken application. It gived Docker a signal about the service's health.*
