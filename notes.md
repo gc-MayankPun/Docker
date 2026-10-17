@@ -401,3 +401,38 @@ docker compose down     # Stops and removes the projects containers and it's def
 ```
 
 *docker compose down does not automatically remove named volumes unless you explicitly request volume removal with -v*
+
+# Docker Images and Registries
+
+- Image: The packaged template used to create containers.
+- Container: A running or stopped instance created from an image.
+- Registry: A service that stores and distributes images such as Docker Hub.
+
+Think of a registry as a warehouse for packaged images. You pull an image from it, run containers from that image and can push your own image to it.
+
+## 1. What is an image tag?
+
+An image reference commonly looks like this:
+```text
+nginx:alpine
+postgres:17-alpine
+node:22-alpine
+```
+
+*The part after colon is the tag.*
+
+## 2. Pull an image from registry
+
+```docker
+docker pull nginx:alpine
+docker images inspect nginx:alpine
+```
+
+pull and push an image to registry
+
+```docker
+docker pull nginx:alpine
+docker build -t my-web-app:1.0 .
+docker tag my-web-app:1.0 YOUR_DOCKERHUB_USERNAME/my-web-app:1.0
+docker push YOUR_DOCKERHUB_USERNAME/my-web-app:1.0
+```
