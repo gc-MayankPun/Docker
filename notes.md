@@ -472,7 +472,10 @@ FROM node:22-alpine
 
 WORKDIR /app
 
+RUN chown node:node /app
+
 COPY --chown=node:node package*.json ./
+
 USER node
 RUN npm install
 
@@ -534,3 +537,45 @@ healthcheck:
 This checks whether PostgreSQL is accepting connections. Your web service uses depends_on with condition: service_healthy to wait for that check before starting.
 
 *Remember that a health check doesn't automaticallt fix a broken application. It gived Docker a signal about the service's health.*
+
+## 6. Why switch to node instead of staying root?
+
+Think of Linux users as having different permission levels.
+
+- Root user: Can modify protected files, change permissions and perform administrative operations inside the container.
+- Node user: Can run your Node.js application and access files it has permission to use, without having full root privileges inside the container.
+
+Imagine your web application has a vulnerability. An attacker exploits it and gains control of the application process.
+- If it runs as root, the attacker inherits root-level privileges inside the container.
+- If it runs as node, the attacker starts with the more limited permissions of that user.
+
+This reduces potential damage. It doesn't make a container invulnerable but it's an important security layer.
+
+Also, root inside a container is not automatically the same as unrestricted root on your host. Container isolation provides additional boundaries, through misconfiguration or vulnerabilities can weaken them.
+
+## 7. Do you need to switch to node everytime?
+
+No. You set it once in the Dockerfile
+```Dockerfile
+USER node
+CMD ["npm", "start"]
+```
+
+Docker remembers the configured user in the image.
+
+Whenever you create a new container from that image, the application runs as node by default. You don't need to specify the user on every docker run or docker compose up command.
+
+You can verify it with:
+```docker
+docker compose exec web whoami
+```
+
+Output:
+```text
+node
+```
+
+And remembers this command:
+```docker
+docker compose up --build -d
+```
